@@ -8,13 +8,14 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms as T
 from torchvision.datasets import CIFAR10
+from tqdm import tqdm
 
 from models import HidingNet, RevealNet
 from utils.losses import StegoLoss
 from utils.visualization import save_quartet_grid
 
 
-# --- Dataset wrapper: pick random (cover, secret) pairs ---
+# --- Dataset wrapper: random (cover, secret) pairs ---
 class PairCIFAR(Dataset):
     def __init__(self, root, train=True, image_size=64):
         transform = T.Compose([
@@ -39,14 +40,14 @@ def train_one_epoch(hider, revealer, loader, opt, device, criterion, noise_std=0
     hider.train()
     revealer.train()
     total, c_accum, s_accum = 0.0, 0.0, 0.0
-    for cover, secret in loader:
+
+    for cover, secret in tqdm(loader, desc="Training", leave=False):
         cover = cover.to(device)
         secret = secret.to(device)
 
         opt.zero_grad(set_to_none=True)
         stego = hider(cover, secret)
 
-        # Optional noise robustness
         if noise_std > 0:
             stego_noisy = stego + noise_std * torch.randn_like(stego)
             decoded = revealer(stego_noisy)
@@ -71,8 +72,9 @@ def evaluate(hider, revealer, loader, device, criterion, save_dir=None):
     revealer.eval()
     total, c_accum, s_accum = 0.0, 0.0, 0.0
     example_saved = False
+
     with torch.no_grad():
-        for cover, secret in loader:
+        for cover, secret in tqdm(loader, desc="Evaluating", leave=False):
             cover = cover.to(device)
             secret = secret.to(device)
             stego = hider(cover, secret)
@@ -130,7 +132,8 @@ def main():
     opt = optim.Adam(list(hider.parameters()) + list(revealer.parameters()), lr=args.lr)
 
     best_val = float('inf')
-    for epoch in range(1, args.epochs + 1):
+
+    for epoch in tqdm(range(1, args.epochs + 1), desc="Epochs"):
         tr, tr_c, tr_s = train_one_epoch(hider, revealer, train_loader, opt, device, criterion, args.noise_std)
         va, va_c, va_s = evaluate(hider, revealer, val_loader, device, criterion, save_dir=args.out_dir)
 
