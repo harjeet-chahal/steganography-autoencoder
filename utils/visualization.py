@@ -3,16 +3,19 @@ import torch
 import torchvision.utils as vutils
 
 
-# Save a grid comparison of (cover, stego, secret, decoded)
-
-
 def save_quartet_grid(cover, stego, secret, decoded, out_path, nrow=4):
-os.makedirs(os.path.dirname(out_path), exist_ok=True)
-# clamp to [-1,1]
-def clamp(x):
-return torch.clamp(x, -1, 1)
-grid = vutils.make_grid(
-torch.cat([clamp(cover), clamp(stego), clamp(secret), clamp(decoded)], dim=0),
-nrow=nrow, normalize=True, range=(-1, 1)
-)
-vutils.save_image(grid, out_path)
+    """
+    Save a grid of cover, stego, secret, decoded images for comparison.
+    """
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+
+    def clamp(x):
+        return torch.clamp(x, -1, 1)
+
+    grid = vutils.make_grid(
+        torch.cat([clamp(cover), clamp(stego), clamp(secret), clamp(decoded)], dim=0),
+        nrow=nrow,
+        normalize=True,
+        range=(-1, 1)
+    )
+    vutils.save_image(grid, out_path)
