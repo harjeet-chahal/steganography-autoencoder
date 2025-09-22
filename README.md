@@ -34,3 +34,7 @@ python evaluate.py --ckpt results/best.pt --out_dir results
 
 # 4) Demo (after training)
 streamlit run demo.py
+
+## 🔜 Upcoming
+- Switch dataset to CelebA for higher resolution images
+- Add adversarial robustness module
